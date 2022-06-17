@@ -1,9 +1,17 @@
-﻿<Application x:Class="Orderbook.App"
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Application x:Class="ICAP.Orderbook.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Orderbook"
-             StartupUri="View/Order.xaml">
+             xmlns:local="clr-namespace:ICAP.Orderbook"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:common="clr-namespace:ICAP.Orderbook.Common"
+             Startup="Application_Startup"
+             StartupUri="View/OrderbookView.xaml">
     <Application.Resources>
-         
+        <ObjectDataProvider x:Key="sellTypeDataProvider" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="common:SellType"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Application.Resources>
 </Application>

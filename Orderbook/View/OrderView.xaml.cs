@@ -13,14 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace ICAP.Orderbook.View
+namespace ICAP.Orderbook
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for OrderView.xaml
     /// </summary>
-    public partial class Orderbook : Window
+    public partial class OrderView : Window
     {
-        public Orderbook()
+        public OrderView()
         {
             InitializeComponent();
         }
