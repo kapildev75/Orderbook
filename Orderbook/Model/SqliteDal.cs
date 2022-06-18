@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
-using System.Configuration;
 using System.Collections.ObjectModel;
-using System.IO;
 using ICAP.Orderbook.Common;
 using ICAP.Orderbook.Interfaces;
 using Orderbook.Common;
-using System.Data;
 
 namespace ICAP.Orderbook.Model
 {
@@ -18,20 +12,14 @@ namespace ICAP.Orderbook.Model
     {
         readonly string connectionString;
 
-        public SqliteDal()
+        public SqliteDal(string connectionString)
         {
-            var connectionStr = Path.GetFullPath(ConfigurationManager.ConnectionStrings["OrderDatabase"].ConnectionString);
-            if (!File.Exists(connectionStr))
-            {
-                throw new Exception($"SQLite database is not availble on given path. {connectionStr}");
-            }
-
-            connectionString = $"Data Source={connectionStr}";
+            this.connectionString = connectionString;
 
             Orders = new ObservableCollection<IOrder>();
         }
 
-        public ObservableCollection<IOrder> Orders { get; set; }
+        public ObservableCollection<IOrder> Orders { get; }
 
         public void GetOrders(string brokerName)
         {
@@ -98,6 +86,11 @@ namespace ICAP.Orderbook.Model
                 throw new ArgumentNullException(nameof(updateOrder));
             }
 
+            if (!ValidateEnumItem<SellType>(updateOrder.SellType))
+            {
+                return 0;
+            }
+
             try
             {
                 using (SqliteConnection conn = new SqliteConnection(connectionString))
@@ -138,6 +131,11 @@ namespace ICAP.Orderbook.Model
             if (newOrder == null)
             {
                 throw new ArgumentNullException(nameof(newOrder));
+            }
+
+            if (!ValidateEnumItem<SellType>(newOrder.SellType))
+            {
+                return 0;
             }
 
             try
@@ -189,7 +187,6 @@ namespace ICAP.Orderbook.Model
             }
         }
 
-
         public int DeleteOrder(int deleteOrderId)
         {
             try
@@ -216,6 +213,11 @@ namespace ICAP.Orderbook.Model
             }
         }
 
+        public T NumToEnum<T>(int number)
+        {
+            return (T)Enum.ToObject(typeof(T), number);
+        }
+
         private void DeleteItemFromObservableCollection(int deleteOrderId)
         {
             var item = Orders.FirstOrDefault(x => x.OrderId == deleteOrderId);
@@ -235,9 +237,14 @@ namespace ICAP.Orderbook.Model
             }
         }
 
-        public T NumToEnum<T>(int number)
+        private bool ValidateEnumItem<T>(T eEnumItem)
         {
-            return (T)Enum.ToObject(typeof(T), number);
+            if(eEnumItem == null)
+            {
+                return false;
+            }
+
+            return Enum.IsDefined(typeof(T), eEnumItem) ? true : false;
         }
     }
 }

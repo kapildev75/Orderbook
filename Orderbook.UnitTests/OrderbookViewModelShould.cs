@@ -1,10 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ICAP.Orderbook.ViewModel;
 using FluentAssertions;
-using System;
 using ICAP.Orderbook.Interfaces;
 using NSubstitute;
-using Autofac;
 using ICAP.Orderbook;
 using System.Windows.Input;
 

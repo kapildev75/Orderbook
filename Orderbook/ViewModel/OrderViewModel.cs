@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 using ICAP.Orderbook.Commands;
 using ICAP.Orderbook.Common;
 using ICAP.Orderbook.Interfaces;

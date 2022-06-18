@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Orderbook.Common;
+﻿using System.Collections.ObjectModel;
 
 namespace ICAP.Orderbook.Interfaces
 {
     public interface ISqliteDal
     {
-        ObservableCollection<IOrder> Orders { get; set; }
+        ObservableCollection<IOrder> Orders { get; }
 
         void GetOrders(string brokerName);
 

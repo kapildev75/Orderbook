@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 using System.Windows;
-using Autofac;
 using ICAP.Orderbook.Interfaces;
 using ICAP.Orderbook.Model;
 
@@ -16,11 +12,13 @@ namespace ICAP.Orderbook
     /// </summary>
     public partial class App : Application
     {
+        private readonly string connectionString = String.Empty;
+
         public App()
         {
             try
             {
-
+                connectionString = GetDatabaseConnection();
             }
             catch (Exception exception)
             {
@@ -30,8 +28,21 @@ namespace ICAP.Orderbook
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            ISqliteDal sqliteDal = new SqliteDal();
+            ISqliteDal sqliteDal = new SqliteDal(connectionString);
             ServiceLocator.RegisterNewInstanceAndBuild(sqliteDal);
+        }
+
+        public string GetDatabaseConnection()
+        {
+            var connectionStr = Path.GetFullPath(ConfigurationManager.ConnectionStrings["OrderDatabase"].ConnectionString);
+            if (!File.Exists(connectionStr))
+            {
+                throw new Exception($"SQLite database is not availble on given path. {connectionStr}");
+            }
+
+            connectionStr = $"Data Source={connectionStr}";
+
+            return connectionStr;
         }
     }
 }
