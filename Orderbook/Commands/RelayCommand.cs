@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace ICAP.Orderbook.Commands
@@ -68,7 +69,16 @@ namespace ICAP.Orderbook.Commands
         {
             if (parameter != null)
             {
-                _execute(parameter);
+                try
+                {
+                    _execute(parameter);
+                }
+                catch (Exception exception)
+                {
+                    // NOTE: This can be replaced with logger message as this is not a
+                    // good place to popup message box.
+                    MessageBox.Show(exception.Message);
+                }
             }
         }
     }

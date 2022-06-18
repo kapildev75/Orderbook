@@ -16,14 +16,14 @@ namespace ICAP.Orderbook.Model
         {
             this.connectionString = connectionString;
 
-            Orders = new ObservableCollection<IOrder>();
+            Orders = new ObservableCollection<IFullOrder>();
         }
 
-        public ObservableCollection<IOrder> Orders { get; }
+        public ObservableCollection<IFullOrder> Orders { get; }
 
         public void GetOrders(string brokerName)
         {
-            if(string.IsNullOrEmpty(brokerName))
+            if (string.IsNullOrEmpty(brokerName))
             {
                 throw new ArgumentNullException(nameof(brokerName));
             }
@@ -33,44 +33,28 @@ namespace ICAP.Orderbook.Model
                 using SqliteConnection conn = new SqliteConnection(connectionString);
 
                 string commandQuery = brokerName == "*" ?
-                    "Select * from Orderbook" :
-                    $"select * from Orderbook where [Broker Name] = '{brokerName}'";
+                    $"Select OrderId, [Customer Name], [Broker Name], Price, Size, SellType, " +
+                    "Description, [Price in $] from Orderbook " +
+                    "Inner Join " +
+                    "Price On Orderbook.Price == Price.Id" :
+                    "Select OrderId, [Customer Name], [Broker Name], Price, Size, SellType, " +
+                    "Description, [Price in $] from Orderbook " +
+                    "Left Join Price On Orderbook.Price == Price.Id " +
+                    "Where[Broker Name] = '{brokerName}'";
 
                 SqliteCommand command = new SqliteCommand(commandQuery, conn);
 
                 conn.Open();
 
-                using SqliteDataReader reader = command.ExecuteReader();
-
-                // Clear old observable list and fill with new order data.
-                Orders.Clear();
-
-                while (reader.Read())
+                using (SqliteDataReader reader = command.ExecuteReader())
                 {
-                    IOrder order = new Order();
-
-                    order.OrderId = Convert.ToInt32(reader["OrderId"]);
-
-                    var customerName = reader["Customer Name"];
-                    if (customerName != null)
+                    // Clear old observable list and fill with new order data.
+                    Orders.Clear();
+                    while (reader.Read())
                     {
-                        order.CustomerName = (string)customerName;
+                        IFullOrder order = ConvertSqliteRecordIntoOrder(reader);
+                        Orders.Add(order);
                     }
-
-                    var bName = reader["Broker Name"];
-                    if (bName != null)
-                    {
-                        order.BrokerName = (string)bName;
-                    }
-
-                    order.Price = Convert.ToDouble(reader["Price"]);
-
-                    order.Size = Convert.ToInt32(reader["Size"]);
-
-                    int sellType = Convert.ToInt32(reader["SellType"]);
-                    order.SellType = NumToEnum<SellType>(sellType);
-
-                    Orders.Add(order);
                 }
             }
             catch (SqliteException exception)
@@ -91,6 +75,11 @@ namespace ICAP.Orderbook.Model
                 return 0;
             }
 
+            if (!ValidateEnumItem<PriceType>(updateOrder.PriceType))
+            {
+                return 0;
+            }
+
             try
             {
                 using (SqliteConnection conn = new SqliteConnection(connectionString))
@@ -99,22 +88,31 @@ namespace ICAP.Orderbook.Model
 
                     command.CommandText = $"UPDATE Orderbook SET [Customer Name] = '{updateOrder.CustomerName}', " +
                         $"[Broker Name] = '{updateOrder.BrokerName}', " +
-                        $"Price = {updateOrder.Price}, " +
+                        $"Price = {(int)updateOrder.PriceType}, " +
                         $"Size = {updateOrder.Size}, " +
                         $"SellType = {(int)updateOrder.SellType} " +
                         $"WHERE OrderId = {updateOrder.OrderId}";
 
                     command.Parameters.AddWithValue("@[Customer Name]", updateOrder.CustomerName);
                     command.Parameters.AddWithValue("@[Broker Name]", updateOrder.BrokerName);
-                    command.Parameters.AddWithValue("@Price", updateOrder.Price);
+                    command.Parameters.AddWithValue("@Price", (int)updateOrder.PriceType);
                     command.Parameters.AddWithValue("@Size", updateOrder.Size);
                     command.Parameters.AddWithValue("@SellType", (int)updateOrder.SellType);
 
                     conn.Open();
                     int updatedRecordNumber = command.ExecuteNonQuery();
-                    if(updatedRecordNumber > 0)
+                    if (updatedRecordNumber > 0)
                     {
-                        UpdateObservableCollectionOrders(updateOrder);
+                        command.CommandText = BuildSelectQueryBasedOnOrderId(updateOrder.OrderId);
+
+                        using (SqliteDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                IFullOrder updatedOrder = ConvertSqliteRecordIntoOrder(reader);
+                                UpdateObservableCollectionOrders(updatedOrder);
+                            }
+                        }
                     }
 
                     return updatedRecordNumber;
@@ -138,6 +136,11 @@ namespace ICAP.Orderbook.Model
                 return 0;
             }
 
+            if (!ValidateEnumItem<PriceType>(newOrder.PriceType))
+            {
+                return 0;
+            }
+
             try
             {
                 using (SqliteConnection conn = new SqliteConnection(connectionString))
@@ -151,13 +154,13 @@ namespace ICAP.Orderbook.Model
                         $"SellType ) " +
                         $"VALUES ( '{newOrder.CustomerName}', " +
                         $"'{newOrder.BrokerName}', " +
-                        $"{newOrder.Price}, " +
+                        $"{(int)newOrder.PriceType}, " +
                         $"{newOrder.Size}, " +
                         $"{(int)newOrder.SellType} )";
 
                     command.Parameters.AddWithValue("@[Customer Name]", newOrder.CustomerName);
                     command.Parameters.AddWithValue("@[Broker Name]", newOrder.BrokerName);
-                    command.Parameters.AddWithValue("@Price", newOrder.Price);
+                    command.Parameters.AddWithValue("@Price", (int)newOrder.PriceType);
                     command.Parameters.AddWithValue("@Size", newOrder.Size);
                     command.Parameters.AddWithValue("@SellType", (int)newOrder.SellType);
 
@@ -169,13 +172,21 @@ namespace ICAP.Orderbook.Model
                         command.CommandText = "SELECT MAX(OrderId) AS max_id FROM Orderbook";
 
                         object? lastPrimaryKey = command.ExecuteScalar();
-                        if(lastPrimaryKey != null)
+                        if (lastPrimaryKey != null)
                         {
                             int newOrderId = Convert.ToInt32(lastPrimaryKey);
-                            newOrder.OrderId = newOrderId;
-                        }
 
-                        Orders.Add(newOrder);
+                            command.CommandText = BuildSelectQueryBasedOnOrderId(newOrderId);
+
+                            using (SqliteDataReader reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    IFullOrder order = ConvertSqliteRecordIntoOrder(reader);
+                                    Orders.Add(order);
+                                }
+                            }
+                        }
                     }
 
                     return insertRecordNumber;
@@ -227,7 +238,7 @@ namespace ICAP.Orderbook.Model
             }
         }
 
-        private void UpdateObservableCollectionOrders(IOrder order)
+        private void UpdateObservableCollectionOrders(IFullOrder order)
         {
             var oldItem = Orders.FirstOrDefault(x => x.OrderId == order.OrderId);
             if (oldItem != null)
@@ -237,9 +248,54 @@ namespace ICAP.Orderbook.Model
             }
         }
 
+        private string BuildSelectQueryBasedOnOrderId(int orderId)
+        {
+            return $"Select OrderId, [Customer Name], [Broker Name], Price, Size, " +
+                                $"SellType, Description, [Price in $] from Orderbook " +
+                                $"Left Join Price On Orderbook.Price == Price.Id " +
+                                $"Where Orderbook.OrderId == {orderId}";
+        }
+
+        private IFullOrder ConvertSqliteRecordIntoOrder(SqliteDataReader reader)
+        {
+            IFullOrder order = new Order();
+
+            order.OrderId = Convert.ToInt32(reader["OrderId"]);
+
+            var customerName = reader["Customer Name"];
+            if (customerName != null)
+            {
+                order.CustomerName = (string)customerName;
+            }
+
+            var bName = reader["Broker Name"];
+            if (bName != null)
+            {
+                order.BrokerName = (string)bName;
+            }
+
+            int priceType = Convert.ToInt32(reader["Price"]);
+            order.PriceType = NumToEnum<PriceType>(priceType);
+
+            order.Size = Convert.ToInt32(reader["Size"]);
+
+            int sellType = Convert.ToInt32(reader["SellType"]);
+            order.SellType = NumToEnum<SellType>(sellType);
+
+            var description = reader["Description"];
+            if (description != null)
+            {
+                order.Description = (string)description;
+            }
+
+            order.Price = Convert.ToDouble(reader["Price in $"]);
+
+            return order;
+        }
+
         private bool ValidateEnumItem<T>(T eEnumItem)
         {
-            if(eEnumItem == null)
+            if (eEnumItem == null)
             {
                 return false;
             }

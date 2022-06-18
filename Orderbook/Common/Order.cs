@@ -3,12 +3,13 @@ using ICAP.Orderbook.Interfaces;
 
 namespace Orderbook.Common
 {
-    public class Order : NotifyProperty, IOrder
+    public class Order : NotifyProperty, IFullOrder
     {
         public Order()
         {
             _customerName = string.Empty;
             _brokerName = string.Empty;
+            _description = string.Empty;
         }
 
         private int _orderId;
@@ -35,12 +36,12 @@ namespace Orderbook.Common
             set { _brokerName = value; OnPropertyChanged("BrokerName"); }
         }
 
-        private double _price;
+        private PriceType _priceType;
 
-        public double Price
+        public PriceType PriceType
         {
-            get { return _price; }
-            set { _price = value; OnPropertyChanged("Price"); }
+            get { return _priceType; }
+            set { _priceType = value; OnPropertyChanged("PriceType"); }
         }
 
         private int _size;
@@ -57,6 +58,30 @@ namespace Orderbook.Common
         {
             get { return _sellType; }
             set { _sellType = value; OnPropertyChanged("SellType"); }
+        }
+
+        private int _priceId;
+
+        public int PriceId
+        {
+            get { return _priceId; }
+            set { _priceId = value; }
+        }
+
+        private string _description;
+
+        public string Description
+        {
+            get { return _description; }
+            set { _description = value; }
+        }
+
+        private double _price;
+
+        public double Price
+        {
+            get { return _price; }
+            set { _price = value; }
         }
     }
 }

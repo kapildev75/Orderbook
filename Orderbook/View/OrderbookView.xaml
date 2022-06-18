@@ -46,10 +46,14 @@
                 <DataGridTextColumn Header="OrderId" Binding="{Binding OrderId}" IsReadOnly="True" />
                 <DataGridTextColumn Header="Customer Name" Binding="{Binding CustomerName}" IsReadOnly="False" />
                 <DataGridTextColumn Header="Broker Name" Binding="{Binding BrokerName}" IsReadOnly="False" />
-                <DataGridTextColumn Header="Price" Binding="{Binding Price}" IsReadOnly="False" />
+                <DataGridComboBoxColumn Header="PriceType" IsReadOnly="True" SelectedItemBinding="{Binding PriceType}" 
+                                        ItemsSource="{Binding Source={StaticResource priceypeDataProvider}}" />
                 <DataGridTextColumn Header="Size" Binding="{Binding Size}" IsReadOnly="False" />
-                <DataGridComboBoxColumn Header="SellType" SelectedItemBinding="{Binding SellType}" 
-                                        ItemsSource="{Binding Source={StaticResource sellTypeDataProvider}}" IsReadOnly="False" />
+                <DataGridComboBoxColumn Header="SellType" IsReadOnly="False" SelectedItemBinding="{Binding SellType}" 
+                                        ItemsSource="{Binding Source={StaticResource sellTypeDataProvider}}" />
+
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}" IsReadOnly="True" />
+                <DataGridTextColumn Header="Price in $" Binding="{Binding Price}" IsReadOnly="True" />
             </DataGrid.Columns>
         </DataGrid>
 

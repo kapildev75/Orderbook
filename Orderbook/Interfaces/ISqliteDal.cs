@@ -4,7 +4,7 @@ namespace ICAP.Orderbook.Interfaces
 {
     public interface ISqliteDal
     {
-        ObservableCollection<IOrder> Orders { get; }
+        ObservableCollection<IFullOrder> Orders { get; }
 
         void GetOrders(string brokerName);
 

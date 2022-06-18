@@ -10,7 +10,7 @@ namespace ICAP.Orderbook.Interfaces
 
         string BrokerName { get; set; }
 
-        double Price { get; set; }
+        PriceType PriceType { get; set; }
 
         int Size { get; set; }
 

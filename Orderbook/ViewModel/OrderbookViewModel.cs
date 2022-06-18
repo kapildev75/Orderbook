@@ -26,7 +26,7 @@ namespace ICAP.Orderbook.ViewModel
             _deleteOrderCmd = null;
         }
 
-        public ObservableCollection<IOrder> Orders => sqliteDal.Orders;
+        public ObservableCollection<IFullOrder> Orders => sqliteDal.Orders;
 
         public string BrokerNameForOrders
         {

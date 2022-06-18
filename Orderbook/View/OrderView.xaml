@@ -34,7 +34,12 @@
 
         <TextBox Grid.Column="1" Grid.Row="0" Margin="5" Text="{Binding Path=BrokerName, Mode=TwoWay}"/>
         <TextBox Grid.Column="1" Grid.Row="1" Margin="5" Text="{Binding Path=CustomerName, Mode=TwoWay}"/>
-        <TextBox Grid.Column="1" Grid.Row="2" Margin="5" Text="{Binding Path=Price, Mode=TwoWay}"/>
+
+        <ComboBox Grid.Column="1" Grid.Row="2" Margin="5" IsReadOnly="True" SelectedIndex="0"
+                  ItemsSource="{Binding Source={StaticResource priceypeDataProvider}}"
+                  SelectedItem="{Binding PriceType, Mode=TwoWay}">
+        </ComboBox>
+
         <TextBox Grid.Column="1" Grid.Row="3" Margin="5" Text="{Binding Path=Size, Mode=TwoWay}"/>
 
         <ComboBox Grid.Column="1" Grid.Row="4" Margin="5" IsReadOnly="True" SelectedIndex="0"

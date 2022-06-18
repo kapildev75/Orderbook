@@ -6,7 +6,7 @@ using Orderbook.Common;
 
 namespace ICAP.Orderbook.ViewModel
 {
-    public class OrderViewModel : NotifyProperty, IOrder
+    public class OrderViewModel : NotifyProperty, IFullOrder
     {
         private readonly ISqliteDal sqliteDal;
         private ICommand? _insertOrderCmd;
@@ -18,6 +18,9 @@ namespace ICAP.Orderbook.ViewModel
             _insertOrderCmd = null;
             CustomerName = string.Empty;
             BrokerName = string.Empty;
+            Description = string.Empty;
+
+            PriceType = PriceType.Iron;
             SellType = SellType.Buy;
         }
 
@@ -27,11 +30,17 @@ namespace ICAP.Orderbook.ViewModel
 
         public string BrokerName { get; set; }
 
-        public double Price { get; set; }
+        public PriceType PriceType { get; set; }
 
         public int Size { get; set; }
 
         public SellType SellType { get; set; }
+
+        public int PriceId { get; set; }
+
+        public string Description { get; set; }
+
+        public double Price { get; set; }
 
         public ICommand InsertOrderCmd
         {
@@ -53,7 +62,7 @@ namespace ICAP.Orderbook.ViewModel
                 IOrder newOrder = new Order();
                 newOrder.BrokerName = BrokerName;
                 newOrder.CustomerName = CustomerName;
-                newOrder.Price = Price;
+                newOrder.PriceType = PriceType;
                 newOrder.Size = Size;
                 newOrder.SellType = SellType;
 
@@ -65,7 +74,7 @@ namespace ICAP.Orderbook.ViewModel
         {
             if(string.IsNullOrEmpty(CustomerName) || 
                 string.IsNullOrEmpty(BrokerName) ||
-                Price <= 0 || Size <= 0)
+                Size <= 0)
             {
                 return false;
             }

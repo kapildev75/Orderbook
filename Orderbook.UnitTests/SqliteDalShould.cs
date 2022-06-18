@@ -8,7 +8,6 @@ using System.IO;
 using System;
 using System.Linq;
 using Orderbook.Common;
-using Microsoft.Data.Sqlite;
 
 namespace Orderbook.UnitTests
 {
@@ -16,7 +15,7 @@ namespace Orderbook.UnitTests
     public class SqliteDalShould
     {
         private readonly string connectionString;
-        IOrder defaultOrder;
+        IFullOrder defaultOrder;
 
         public SqliteDalShould()
         {
@@ -34,9 +33,11 @@ namespace Orderbook.UnitTests
             defaultOrder = new Order();
             defaultOrder.BrokerName = "New Broker";
             defaultOrder.CustomerName = "New Customer";
-            defaultOrder.Price = 10;
+            defaultOrder.PriceType = PriceType.Silver;
             defaultOrder.Size = 20;
             defaultOrder.SellType = SellType.Sale;
+            defaultOrder.Description = "Silver per Kg";
+            defaultOrder.Price = 1000;
         }
 
         [TestMethod]
@@ -73,12 +74,11 @@ namespace Orderbook.UnitTests
             sqliteDal.InsertNewOrder(defaultOrder);
             sqliteDal.Orders.Count.Should().Be(1);
 
-            sqliteDal.Orders.FirstOrDefault().Should().BeEquivalentTo(defaultOrder);
-
             IOrder expectedOrder = new Order();
+            expectedOrder.OrderId = sqliteDal.Orders.FirstOrDefault().OrderId;
             expectedOrder.BrokerName = "New Broker Alex";
             expectedOrder.CustomerName = "New Customer John";
-            expectedOrder.Price = 10;
+            expectedOrder.PriceType = PriceType.Silver;
             expectedOrder.Size = 20;
             expectedOrder.SellType = SellType.Buy;
 
@@ -86,14 +86,17 @@ namespace Orderbook.UnitTests
             defaultOrder.BrokerName = "New Broker Alex";
             defaultOrder.CustomerName = "New Customer John";
             defaultOrder.SellType = SellType.Buy;
+            
+            int updatedRows = sqliteDal.UpdateOrder(expectedOrder);
+            updatedRows.Should().Be(1);
 
             // Order ID is auto generated in database so better to compare each element except Order Id.
             var modifiedOrder = sqliteDal.Orders.FirstOrDefault();
             modifiedOrder.Should().NotBeNull();
 
-            modifiedOrder.BrokerName.Should().BeSameAs(defaultOrder.BrokerName);
-            modifiedOrder.CustomerName.Should().BeSameAs(defaultOrder.CustomerName);
-            modifiedOrder.Price.Should().Be(defaultOrder.Price);
+            modifiedOrder.BrokerName.Should().Be(defaultOrder.BrokerName);
+            modifiedOrder.CustomerName.Should().Be(defaultOrder.CustomerName);
+            modifiedOrder.PriceType.Should().Be(defaultOrder.PriceType);
             modifiedOrder.Size.Should().Be(defaultOrder.Size);
             modifiedOrder.SellType.Should().Be(defaultOrder.SellType);
         }
@@ -206,7 +209,7 @@ namespace Orderbook.UnitTests
             {
                 do
                 {
-                    IOrder order = sqliteDal.Orders.First();
+                    IFullOrder order = sqliteDal.Orders.First();
                     sqliteDal.DeleteOrder(order.OrderId);
                 } while(sqliteDal.Orders.Count > 0);
             }
